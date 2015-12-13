@@ -188,12 +188,17 @@ function qp_step(nets::Vector{Net}, gates::Vector{Gate}, pads::Vector{Pad})
     tol = 1e-12
     x,ch = cg(A,bx,tol=tol,maxiter=maxiter)
     #see https://github.com/JuliaLang/julia/issues/6485#issuecomment-40063871
-    @test_approx_eq_eps A*x bx cond(full(A))*sqrt(tol)
+    #feature request https://github.com/JuliaLang/julia/issues/6485
+    #https://github.com/mfasi/julia/commit/4ceb4ea9ee46ea92d406cfced308451a112d16f9
+    #@test_approx_eq_eps A*x bx cond(full(A))*sqrt(tol)
+    @test_approx_eq_eps A*x bx cond(A, Inf)*sqrt(tol)
     @test ch.isconverged
     println("ch_x : $ch")
     
     y,ch = cg(A,by,tol=tol,maxiter=maxiter)
-    @test_approx_eq_eps A*y by cond(full(A))*sqrt(tol)
+    #ditto above
+    #@test_approx_eq_eps A*y by cond(full(A))*sqrt(tol)
+    @test_approx_eq_eps A*y by cond(A, Inf)*sqrt(tol)
     @test ch.isconverged
     println("ch_y : $ch")
 
@@ -242,7 +247,7 @@ function left_side_containment(left_pos  ::IndexedPosVec,
     for i = 1:num_nets
         orig_net = nets[i]
         if isempty(intersect(orig_net.gates_set,left_gates_indices))
-            println("-D- the orig_net $orig_net DOESN'T belongs to left partition, EXCLUDE it")
+            println("-D- the orig_net $orig_net DOESN'T belong to left partition, EXCLUDE it")
         else
             net_no::UInt = i
             println("-D- the orig_net $orig_net belongs to left partition, fix it and include")
@@ -315,7 +320,7 @@ function right_side_containment(left_pos  ::IndexedPosVec,
     for i = 1:num_nets
         orig_net = nets[i]
         if isempty(intersect(orig_net.gates_set,right_gates_indices))
-            println("-D- the orig_net $orig_net DOESN'T belongs to right partition, EXCLUDE it")
+            println("-D- the orig_net $orig_net DOESN'T belong to right partition, EXCLUDE it")
         else
             net_no::UInt = i
             println("-D- the orig_net $orig_net belongs to right partition, fix it and include")
