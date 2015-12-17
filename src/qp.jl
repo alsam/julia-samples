@@ -62,7 +62,7 @@ function net_is_empty(n::Net)
     length(gates) == 0 && length(pads) == 0
 end
 
-function read_input(fname::String)
+function read_input(fname::AbstractString)
 
     is = open(fname, "r")
     line = readline(is)
@@ -476,7 +476,7 @@ Options:
     if verbose println("-D- all gates after 3d placement: \n$gates") end
 
     if length(ARGS) >= 2 # write to file with the name given by ARGS[2]
-        out_fname::String = ARGS[2]
+        out_fname::AbstractString = ARGS[2]
         os = open(out_fname, "w")
         for i = 1:num_gates
             gate = gates[i]
