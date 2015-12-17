@@ -221,7 +221,8 @@ function assignment_cut(verbose::Bool, gate_pos::IndexedPosVec)
     return ( sorted_gate_pos[1:median], sorted_gate_pos[median+1:num_gates] )
 end
 
-function left_side_containment(left_pos  ::IndexedPosVec,
+function left_side_containment(verbose   ::Bool,
+                               left_pos  ::IndexedPosVec,
                                right_pos ::IndexedPosVec,
                                nets      ::Vector{Net},
                                gates     ::Vector{Gate},
@@ -234,12 +235,14 @@ function left_side_containment(left_pos  ::IndexedPosVec,
         left_gates_renumbering[left_gates[i].id] = i
     end
     left_pads = deepcopy(pads)
-    println("-D- left_gates : $left_gates")
-    println("-D- left_gates_renumbering : $left_gates_renumbering")
+    if verbose
+        println("-D- left_gates : $left_gates")
+        println("-D- left_gates_renumbering : $left_gates_renumbering")
+    end
     left_gates_indices  = IntSet([left_pos[i][1] for i = 1:length(left_pos)])
-    println("-D- left gates indices : $left_gates_indices")
+    if verbose println("-D- left gates indices : $left_gates_indices") end
     right_gates_indices = IntSet([right_pos[i][1] for i = 1:length(right_pos)])
-    println("-D- right gates indices : $right_gates_indices")
+    if verbose println("-D- right gates indices : $right_gates_indices") end
 
     const median::Float64 = 50.0
 
@@ -248,10 +251,10 @@ function left_side_containment(left_pos  ::IndexedPosVec,
     for i = 1:num_nets
         orig_net = nets[i]
         if isempty(intersect(orig_net.gates_set,left_gates_indices))
-            println("-D- the orig_net $orig_net DOESN'T belong to left partition, EXCLUDE it")
+            if verbose println("-D- the orig_net $orig_net DOESN'T belong to left partition, EXCLUDE it") end
         else
             net_no::UInt = i
-            println("-D- the orig_net $orig_net belongs to left partition, fix it and include")
+            if verbose println("-D- the orig_net $orig_net belongs to left partition, fix it and include") end
             orig_pads_indices = orig_net.pads
             new_pads_indices = UInt[]
             # process orig pads
@@ -294,7 +297,8 @@ function left_side_containment(left_pos  ::IndexedPosVec,
     (left_nets, left_gates, left_pads)
 end
 
-function right_side_containment(left_pos  ::IndexedPosVec,
+function right_side_containment(verbose   ::Bool,
+                                left_pos  ::IndexedPosVec,
                                 right_pos ::IndexedPosVec,
                                 nets      ::Vector{Net},
                                 gates     ::Vector{Gate},
@@ -302,17 +306,17 @@ function right_side_containment(left_pos  ::IndexedPosVec,
     num_gates = length(gates)
     right_gates = [deepcopy(gates[right_pos[i][1]]) for i = 1:length(right_pos)]
     right_pads = deepcopy(pads)
-    println("-D- right_gates : $right_gates")
+    if verbose println("-D- right_gates : $right_gates") end
     left_gates_indices  = IntSet([left_pos[i][1] for i = 1:length(left_pos)])
-    println("-D- left gates indices : $left_gates_indices")
+    if verbose println("-D- left gates indices : $left_gates_indices") end
     right_gates_indices = IntSet([right_pos[i][1] for i = 1:length(right_pos)])
-    println("-D- right gates indices : $right_gates_indices")
+    if verbose println("-D- right gates indices : $right_gates_indices") end
     right_gates_renumbering = Array(Int, num_gates)
     fill!(right_gates_renumbering, -1)
     for i = 1:length(right_gates)
         right_gates_renumbering[right_gates[i].id] = i
     end
-    println("-D- right_gates_renumbering : $right_gates_renumbering")
+    if verbose println("-D- right_gates_renumbering : $right_gates_renumbering") end
 
     const median::Float64 = 50.0
 
@@ -321,10 +325,10 @@ function right_side_containment(left_pos  ::IndexedPosVec,
     for i = 1:num_nets
         orig_net = nets[i]
         if isempty(intersect(orig_net.gates_set,right_gates_indices))
-            println("-D- the orig_net $orig_net DOESN'T belong to right partition, EXCLUDE it")
+            if verbose println("-D- the orig_net $orig_net DOESN'T belong to right partition, EXCLUDE it") end
         else
             net_no::UInt = i
-            println("-D- the orig_net $orig_net belongs to right partition, fix it and include")
+            if verbose println("-D- the orig_net $orig_net belongs to right partition, fix it and include") end
             orig_pads_indices = orig_net.pads
             new_pads_indices = UInt[]
             # process orig pads
@@ -438,7 +442,7 @@ Options:
         println("-D- right part $right")
     end
 
-    (left_nets::Vector{Net}, left_gates::Vector{Gate}, left_pads::Vector{Pad}) = left_side_containment(left, right, nets, gates, pads)
+    (left_nets::Vector{Net}, left_gates::Vector{Gate}, left_pads::Vector{Pad}) = left_side_containment(verbose, left, right, nets, gates, pads)
     if verbose
         println("-D- left_gates: $left_gates")
         println("-D- left_pads: $left_pads")
@@ -457,7 +461,7 @@ Options:
 
     if verbose println("-D- all gates after 2nd placement: \n$gates") end
 
-    (right_nets::Vector{Net}, right_gates::Vector{Gate}, right_pads::Vector{Pad}) = right_side_containment(left, right, nets, gates, pads)
+    (right_nets::Vector{Net}, right_gates::Vector{Gate}, right_pads::Vector{Pad}) = right_side_containment(verbose, left, right, nets, gates, pads)
     if verbose
         println("-D- right_gates: $right_gates")
         println("-D- right_pads: $right_pads")
