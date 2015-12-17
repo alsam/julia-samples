@@ -21,6 +21,7 @@
 
 using IterativeSolvers
 using Base.Test
+using DocOpt
 
 type Pos
     x::Float64
@@ -126,7 +127,7 @@ function create_nets(num_nets::UInt, gates::Vector{Gate}, pads::Vector{Pad})
     return nets
 end
 
-function qp_step(nets::Vector{Net}, gates::Vector{Gate}, pads::Vector{Pad})
+function qp_step(verbose::Bool, maxiter::Int, tol::Float64, nets::Vector{Net}, gates::Vector{Gate}, pads::Vector{Pad})
     num_nets   ::UInt = length(nets)
     num_gates  ::UInt = length(gates)
     num_pads   ::UInt = length(pads)
@@ -138,18 +139,18 @@ function qp_step(nets::Vector{Net}, gates::Vector{Gate}, pads::Vector{Pad})
         gs = net.gates
         ps = net.pads
         clique_size = length(gs)
-        @printf("-D- NET : %d\n",i)
+        if verbose @printf("-D- NET : %d\n",i) end
         for j = 1:clique_size
             for k = j+1:clique_size
                 jc = gs[j]
                 kc = gs[k]
-                @printf("-D-      Conn %d <-> %d\n", jc, kc)
+                if verbose @printf("-D-      Conn %d <-> %d\n", jc, kc) end
                 C[jc, kc] = C[kc, jc] = net.weight
             end
         end
     end
 
-    println("-D- C : \n$C")
+    if verbose println("-D- C : \n$C") end
 
     A = spzeros(num_gates, num_gates)
     # use dense vectors for rhs 
@@ -175,17 +176,17 @@ function qp_step(nets::Vector{Net}, gates::Vector{Gate}, pads::Vector{Pad})
                 b_accum = (b_accum[1] + net_weight * x, b_accum[2] + net_weight * y)
             end
         end
-        @printf("-D- i: %i diag_val: %f pads_contrib: %f\n",i,diag_val,pads_contrib)
+        if verbose @printf("-D- i: %i diag_val: %f pads_contrib: %f\n",i,diag_val,pads_contrib) end
         A[i, i] = diag_val + pads_contrib
         (bx[i], by[i]) = b_accum
     end
 
-    println("-D- A : \n$A")
-    println("-D- bx : \n$bx")
-    println("-D- by : \n$by")
+    if verbose
+        println("-D- A : \n$A")
+        println("-D- bx : \n$bx")
+        println("-D- by : \n$by")
+    end
 
-    maxiter = 200
-    tol = 1e-12
     x,ch = cg(A,bx,tol=tol,maxiter=maxiter)
     #see https://github.com/JuliaLang/julia/issues/6485#issuecomment-40063871
     #feature request https://github.com/JuliaLang/julia/issues/6485
@@ -200,7 +201,7 @@ function qp_step(nets::Vector{Net}, gates::Vector{Gate}, pads::Vector{Pad})
     #@test_approx_eq_eps A*y by cond(full(A))*sqrt(tol)
     @test_approx_eq_eps A*y by cond(A, Inf)*sqrt(tol)
     @test ch.isconverged
-    println("ch_y : $ch")
+    if verbose println("ch_y : $ch") end
 
     return [(i,Pos(x[i], y[i])) for i = 1:num_gates]
 end
@@ -209,12 +210,12 @@ my_isless(a::Tuple{UInt,Pos}, b::Tuple{UInt,Pos}) = a[2].x * 1e6 + a[2].y < b[2]
 
 typealias IndexedPosVec Vector{Tuple{UInt,Pos}}
 
-function assignment_cut(gate_pos::IndexedPosVec)
+function assignment_cut(verbose::Bool, gate_pos::IndexedPosVec)
     num_gates = length(gate_pos)
 
     # avoid using anonymous functions
     sorted_gate_pos = sort!(gate_pos, alg = QuickSort, lt = my_isless)
-    println("-D- sorted 1st plc : \n$sorted_gate_pos")
+    if verbose println("-D- sorted 1st plc : \n$sorted_gate_pos") end
 
     median::Int = div(num_gates, 2)
     return ( sorted_gate_pos[1:median], sorted_gate_pos[median+1:num_gates] )
@@ -369,44 +370,83 @@ end
 
 function main()
 
-    # for x in ARGS
-    #   println(x)
-    # end
+    const doc = """qp.jl
 
-    @assert(length(ARGS) >= 1)
+Quadratic Placement programming assignment for VLSI course.
+
+Usage:
+  qp.jl -h | --help
+  qp.jl [-v | --verbose] [--tol=<tolerance>] [--iterations=<iterations>] <input> [<output>]
+
+Options:
+  -h --help                  Show this screen.
+  -v --verbose               Adds verbosity
+  --tol=<tolerance>          Specify a tolerance for Conjugate Gradient (CG)
+                             sparse symmetric positive definite (SPD) system solver.
+  --iterations=<iterations>  Specify a number of iterations; defaults to 200.
+
+"""
+
+    if length(ARGS) < 1
+        println(doc)
+        exit(0)
+    end
+
+    arguments = docopt(doc)
+
+    verbose = arguments["--iterations"] != nothing
+
+    if (arguments["--iterations"] != nothing)
+        maxiter = parse(Int, arguments["--iterations"])
+    else
+        maxiter = 200
+    end
+
+    if (arguments["--tol"] != nothing)
+        tol = parse(Float64, arguments["--tol"])
+    else
+        tol = 1e-12
+    end
+
     inp_name = ARGS[1]
     println("-I- reading from $inp_name")
 
     (num_gates::UInt, num_nets::UInt, num_pads::UInt, gates, pads) = read_input(inp_name)
     println("-I- num_gates: $num_gates num_nets: $num_nets num_pads: $num_pads")
-    println("-D- gates: $gates")
-    println("-D- pads: $pads")
+    if verbose
+        println("-D- gates: $gates")
+        println("-D- pads: $pads")
+    end
 
     nets = create_nets(num_nets, gates, pads)
-    println("-D- nets: $nets")
-    gate_pos = qp_step(nets, gates, pads)
-    println("-D- 1st plc : \n$gate_pos")
+    if verbose println("-D- nets: $nets") end
+    gate_pos = qp_step(verbose, maxiter, tol, nets, gates, pads)
+    if verbose println("-D- 1st plc : \n$gate_pos") end
 
     # update gates positions after 1st placement
     for i = 1:num_gates
         gates[i].pos = gate_pos[i][2]
     end
-    println("-D- all gates after 1st placement: \n$gates")
+    if verbose println("-D- all gates after 1st placement: \n$gates") end
 
-    (left,right) = assignment_cut(gate_pos)
+    (left,right) = assignment_cut(verbose, gate_pos)
     @assert(length(left) + length(right) == num_gates)
-    @printf("-D- nam_gates %d length of left part %d length of right part %d\n",
-            num_gates, length(left), length(right))
-    println("-D- left part $left")
-    println("-D- right part $right")
+    if verbose
+        @printf("-D- nam_gates %d length of left part %d length of right part %d\n",
+                num_gates, length(left), length(right))
+        println("-D- left part $left")
+        println("-D- right part $right")
+    end
 
     (left_nets::Vector{Net}, left_gates::Vector{Gate}, left_pads::Vector{Pad}) = left_side_containment(left, right, nets, gates, pads)
-    println("-D- left_gates: $left_gates")
-    println("-D- left_pads: $left_pads")
+    if verbose
+        println("-D- left_gates: $left_gates")
+        println("-D- left_pads: $left_pads")
+    end
     #left_nets = create_nets(new_nets_no, left_gates, left_pads)
-    println("-D- left_nets: $left_nets")
-    gate_pos_2 = qp_step(left_nets, left_gates, left_pads)
-    println("-D- 2nd plc : \n$gate_pos_2")
+    if verbose println("-D- left_nets: $left_nets") end
+    gate_pos_2 = qp_step(verbose, maxiter, tol, left_nets, left_gates, left_pads)
+    if verbose println("-D- 2nd plc : \n$gate_pos_2") end
 
     # update gates positions after 2nd placement
     for i = 1:length(left_gates)
@@ -415,14 +455,16 @@ function main()
         gates[global_gates_idx].pos = gate_pos_2[i][2]
     end
 
-    println("-D- all gates after 2nd placement: \n$gates")
+    if verbose println("-D- all gates after 2nd placement: \n$gates") end
 
     (right_nets::Vector{Net}, right_gates::Vector{Gate}, right_pads::Vector{Pad}) = right_side_containment(left, right, nets, gates, pads)
-    println("-D- right_gates: $right_gates")
-    println("-D- right_pads: $right_pads")
-    println("-D- right_nets: $right_nets")
-    gate_pos_3 = qp_step(right_nets, right_gates, right_pads)
-    println("-D- 3d plc : \n$gate_pos_3")
+    if verbose
+        println("-D- right_gates: $right_gates")
+        println("-D- right_pads: $right_pads")
+        println("-D- right_nets: $right_nets")
+    end
+    gate_pos_3 = qp_step(verbose, maxiter, tol, right_nets, right_gates, right_pads)
+    if verbose println("-D- 3d plc : \n$gate_pos_3") end
 
     # update gates positions after 3d placement
     for i = 1:length(right_gates)
@@ -431,7 +473,7 @@ function main()
         gates[global_gates_idx].pos = gate_pos_3[i][2]
     end
 
-    println("-D- all gates after 3d placement: \n$gates")
+    if verbose println("-D- all gates after 3d placement: \n$gates") end
 
     if length(ARGS) >= 2 # write to file with the name given by ARGS[2]
         out_fname::String = ARGS[2]
