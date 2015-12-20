@@ -385,8 +385,8 @@ Usage:
 
 Options:
   -h --help                  Show this screen.
-  -v --verbose               Adds verbosity
-  --tol=<tolerance>          Specify a tolerance for Conjugate Gradient (CG)
+  -v --verbose               Adds verbosity.
+  --tol=<tolerance>          Specify a tolerance for Conjugate Gradient (CG).
                              sparse symmetric positive definite (SPD) system solver.
   --iterations=<iterations>  Specify a number of iterations; defaults to 200.
 
@@ -413,7 +413,7 @@ Options:
         tol = 1e-12
     end
 
-    inp_name = ARGS[1]
+    inp_name = arguments["<input>"]
     println("-I- reading from $inp_name")
 
     (num_gates::UInt, num_nets::UInt, num_pads::UInt, gates, pads) = read_input(inp_name)
@@ -480,8 +480,8 @@ Options:
 
     if verbose println("-D- all gates after 3d placement: \n$gates") end
 
-    if length(ARGS) >= 2 # write to file with the name given by ARGS[2]
-        out_fname::AbstractString = ARGS[2]
+    if arguments["<output>"] != nothing
+        out_fname::AbstractString = arguments["<output>"]
         os = open(out_fname, "w")
         for i = 1:num_gates
             gate = gates[i]
