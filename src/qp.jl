@@ -399,7 +399,7 @@ Options:
 
     arguments = docopt(doc)
 
-    verbose = arguments["--iterations"] != nothing
+    verbose = arguments["--verbose"] != nothing
 
     if (arguments["--iterations"] != nothing)
         maxiter = parse(Int, arguments["--iterations"])
