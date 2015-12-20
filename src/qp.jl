@@ -374,7 +374,8 @@ end
 
 function main()
 
-    const doc = """qp.jl
+    const script_name = basename(@__FILE__)
+    const doc = """$script_name
 
 Quadratic Placement programming assignment for VLSI course.
 
