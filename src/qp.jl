@@ -380,8 +380,8 @@ function main()
 Quadratic Placement programming assignment for VLSI course.
 
 Usage:
-  qp.jl -h | --help
-  qp.jl [-v | --verbose] [--tol=<tolerance>] [--iterations=<iterations>] <input> [<output>]
+  $script_name -h | --help
+  $script_name [-v | --verbose] [--tol=<tolerance>] [--iterations=<iterations>] <input> [<output>]
 
 Options:
   -h --help                  Show this screen.
