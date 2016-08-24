@@ -19,6 +19,8 @@ function my_draw(f)
     draw(PGF("images/Int_J1_tex2.tex", 5inch, 3inch), my_plot_pgf)
 end
 
+# Gadfly used to support LaTeX labels but doesn't support anymore
+# [Does Gadfly support LaTeX in plot titles and labels?](http://stackoverflow.com/questions/36880531/does-gadfly-support-latex-in-plot-titles-and-labels)
 # see also [PGF LaTeX output seems to be broken #753](https://github.com/dcjones/Gadfly.jl/issues/753)
 
 @time my_draw(f)
