@@ -9,3 +9,10 @@ jinc_zeros : [0.6098349456332522,1.1165652971907642,1.619157742083118,2.12053143
 ```
 
 ![](https://github.com/alsam/julia-samples/blob/master/images/jinc.png "jinc function zeros")
+
+Current status with Julia 0.5 and 0.6 nightly
+---------------------------------------------
+
+- `Gadfly` is up and running again and this is good.
+- `PGF` backend is broken. See `images/golden` for **ideal** `PGF` output.
+
