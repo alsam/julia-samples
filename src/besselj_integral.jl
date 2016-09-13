@@ -11,7 +11,7 @@ function my_draw(f)
     my_plot_pgf = plot(f, 0, 100
                 , Guide.XLabel("r"
                         , orientation=:horizontal)
-                , Guide.YLabel(L"\int_{z=0}^{z=\textbf{r}}J_1(z)dz" # seems Gadfly doesn't support LaTeX L"" anymore
+                , Guide.YLabel(String(L"\int_{z=0}^{z=\textbf{r}}J_1(z)dz") # seems Gadfly doesn't support LaTeX L"" anymore
                                                                     # workaround: edit manually PGF .tex file
                 #, Guide.YLabel("∫₀ʳJ₁(z)dz" # it is very ugly
                         , orientation=:vertical))
