@@ -71,7 +71,7 @@ function read_input(fname::AbstractString)
     println("-I- read num_gates: $num_gates num_nets: $num_nets")
 
     # read gates
-    gates = Array(Gate, num_gates)
+    gates = Array{Gate}(num_gates)
     for i = 1:num_gates
         line = readline(is)
         nums = split(line)
@@ -85,7 +85,7 @@ function read_input(fname::AbstractString)
     line = readline(is)
     num_pads::UInt = parse(line)
     println("-I- read num_pads: $num_pads")
-    pads = Array(Pad, num_pads)
+    pads = Array{Pad}(num_pads)
     for i = 1:num_pads
         line = readline(is)
         nums = split(line)
@@ -214,7 +214,7 @@ end
 
 my_isless(a::Tuple{UInt,Pos}, b::Tuple{UInt,Pos}) = a[2].x * 1e6 + a[2].y < b[2].x * 1e6 + b[2].y
 
-typealias IndexedPosVec Vector{Tuple{UInt,Pos}}
+const IndexedPosVec = Vector{Tuple{UInt,Pos}}
 
 function assignment_cut(verbose::Bool, gate_pos::IndexedPosVec)
     num_gates = length(gate_pos)
@@ -235,7 +235,7 @@ function left_side_containment(verbose   ::Bool,
                                pads      ::Vector{Pad})
     num_gates = length(gates)
     left_gates = [deepcopy(gates[left_pos[i][1]]) for i = 1:length(left_pos)]
-    left_gates_renumbering = Array(Int, num_gates)
+    left_gates_renumbering = Array{Int}(num_gates)
     fill!(left_gates_renumbering, -1)
     for i = 1:length(left_gates)
         left_gates_renumbering[left_gates[i].id] = i
@@ -317,7 +317,7 @@ function right_side_containment(verbose   ::Bool,
     if verbose println("-D- left gates indices : $left_gates_indices") end
     right_gates_indices = IntSet([right_pos[i][1] for i = 1:length(right_pos)])
     if verbose println("-D- right gates indices : $right_gates_indices") end
-    right_gates_renumbering = Array(Int, num_gates)
+    right_gates_renumbering = Array{Int}(num_gates)
     fill!(right_gates_renumbering, -1)
     for i = 1:length(right_gates)
         right_gates_renumbering[right_gates[i].id] = i
