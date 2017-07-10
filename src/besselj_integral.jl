@@ -2,17 +2,18 @@ using Calculus
 using Gadfly
 using LaTeXStrings # for L"" strings
 using Compat
+using QuadGK
 
 # WARNING: integrate(f,a,b) is deprecated, use (quadgk(f,a,b))[1] instead
 # f(x) = integrate(z -> besselj(1, z), 0.0, x)
 
-f(x) = quadgk(z -> besselj(1, z), 0.0, x)[1]
+f(x) = QuadGK.quadgk(z -> besselj(1, z), 0.0, x)[1]
 
 function my_draw(f)
     my_plot_pgf = plot(f, 0, 100
                 , Guide.XLabel("r"
                         , orientation=:horizontal)
-                , Guide.YLabel(L"\int_{z=0}^{z=\textbf{r}}J_1(z)dz" # seems Gadfly doesn't support LaTeX L"" anymore
+                , Guide.YLabel(String(L"\int_{z=0}^{z=\textbf{r}}J_1(z)dz") # seems Gadfly doesn't support LaTeX L"" anymore
                                                                     # workaround: edit manually PGF .tex file
                 #, Guide.YLabel("∫₀ʳJ₁(z)dz" # it is very ugly
                         , orientation=:vertical))
@@ -32,7 +33,7 @@ end
 # FastAnonymous doesn't work for 0.5, 0.6
 
 y = z -> besselj(1, z)
-g(x) = quadgk(y, 0.0, x)[1]
+g(x) = QuadGK.quadgk(y, 0.0, x)[1]
 
 @time my_draw(g)
 @time my_draw(g)

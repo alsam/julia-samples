@@ -1,7 +1,8 @@
 using Calculus
+using QuadGK
 
-f(k) = quadgk(η -> 1 / √(1 - k^2 * cos(η)^2), 0, π / 2 )[1]
-g(k) = quadgk(η -> 1 / √(1 - k^2 * sin(η)^2), 0, π / 2 )[1]
+f(k) = QuadGK.quadgk(η -> 1 / √(1 - k^2 * cos(η)^2), 0, π / 2 )[1]
+g(k) = QuadGK.quadgk(η -> 1 / √(1 - k^2 * sin(η)^2), 0, π / 2 )[1]
 δ(x) = f(x) - g(x)
 
 

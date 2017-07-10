@@ -1,10 +1,11 @@
 using Calculus
 using PGFPlots
+using QuadGK
 
 # WARNING: integrate(f,a,b) is deprecated, use (quadgk(f,a,b))[1] instead
 # f(x) = integrate(z -> besselj(1, z), 0.0, x)
 
-f(x) = quadgk(z -> besselj(1, z), 0.0, x)[1]
+f(x) = QuadGK.quadgk(z -> besselj(1, z), 0.0, x)[1]
 
 function my_draw(f)
     my_plot_pgf = Axis([
@@ -18,7 +19,7 @@ end
 @time my_draw(f)
 
 y = z -> besselj(1, z)
-g(x) = quadgk(y, 0.0, x)[1]
+g(x) = QuadGK.quadgk(y, 0.0, x)[1]
 
 @time my_draw(g)
 @time my_draw(g)
