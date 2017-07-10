@@ -187,19 +187,25 @@ function qp_step(verbose::Bool, maxiter::Int, tol::Float64, nets::Vector{Net}, g
         println("-D- by : \n$by")
     end
 
-    x,ch = cg(A,bx,tol=tol,maxiter=maxiter)
+    x,ch = IterativeSolvers.cg(A,bx,tol=tol,maxiter=maxiter, log=true)
     #see https://github.com/JuliaLang/julia/issues/6485#issuecomment-40063871
     #feature request https://github.com/JuliaLang/julia/issues/6485
     #https://github.com/mfasi/julia/commit/4ceb4ea9ee46ea92d406cfced308451a112d16f9
     #@test_approx_eq_eps A*x bx cond(full(A))*sqrt(tol)
-    @test_approx_eq_eps A*x bx cond(A, Inf)*sqrt(tol)
+    if verbose
+        println("x : $x")
+        @printf("-D- length(A*x) : %d length(bx) : %d\n", length(A*x), length(bx))
+    end
+
+    atol = cond(A, Inf)*sqrt(tol)
+
+    @test A * x ≈ bx atol=atol
     @test ch.isconverged
     println("ch_x : $ch")
     
-    y,ch = cg(A,by,tol=tol,maxiter=maxiter)
+    y,ch = IterativeSolvers.cg(A,by,tol=tol,maxiter=maxiter, log=true)
     #ditto above
-    #@test_approx_eq_eps A*y by cond(full(A))*sqrt(tol)
-    @test_approx_eq_eps A*y by cond(A, Inf)*sqrt(tol)
+    @test A * y ≈ by atol=atol
     @test ch.isconverged
     if verbose println("ch_y : $ch") end
 
