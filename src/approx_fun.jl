@@ -1,18 +1,20 @@
+# [Julia package for function approximation](https://github.com/JuliaApproximation/ApproxFun.jl)
+
 using ApproxFun
 
-x = Fun(identity, [0,100])
+x = Fun(identity, 0..100)
 
 g = sqrt(x)
 
 g2 = g(2)
 
-x = Fun(identity, [0.1,1.])
+x = Fun(identity, 0.1 .. 1.)
 
-w = Fun(identity,[0.1,1.])
+w = Fun(identity,0.1 .. 1.)
 
-T = Fun(identity,[0.1,1.])
+T = Fun(identity,0.1 .. 1.)
 
-ν = Fun(identity,[0.1,1.])
+ν = Fun(identity,0.1 .. 1.)
 
 #kern = ν^4 * besselj(1, 2π*√(x*x+w*w/4) )^2
 
