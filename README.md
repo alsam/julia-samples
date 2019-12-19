@@ -19,4 +19,5 @@ Current status with Julia 0.5 and 0.6 nightly
 Current status with Julia 1.2 and 1.3
 -------------------------------------
 - `PGF` is the most stable for LaTeX output, use `besselj_integral_pgflots.jl` for motivating example.
+- `qp` fixed to work.
 
