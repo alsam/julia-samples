@@ -16,3 +16,7 @@ Current status with Julia 0.5 and 0.6 nightly
 - `Gadfly` is up and running again and this is good.
 - `PGF` backend is broken. See `images/golden` for **ideal** `PGF` output.
 
+Current status with Julia 1.2 and 1.3
+-------------------------------------
+- `PGF` is the most stable for LaTeX output, use `besselj_integral_pgflots.jl` for motivating example.
+
