@@ -20,17 +20,20 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using IterativeSolvers
-using Base.Test
+using LinearAlgebra
+using SparseArrays
+using Test
 using DocOpt
+using Printf
 
-type Pos
+mutable struct Pos
     x::Float64
     y::Float64
 
     Pos(x::Float64 = -1.0, y::Float64 = -1.0) = new(x, y)
 end
 
-type Gate
+mutable struct Gate
     id::UInt
     pos::Pos
     nets::Vector{UInt}
@@ -38,24 +41,24 @@ type Gate
     Gate(id::UInt, nets) = new(id, Pos(), nets)
 end
 
-type Pad
+struct Pad
     pos::Pos
     net_num::UInt
 
     Pad(pos::Pos, net::UInt) = new(pos, net)
 end
 
-type Net
+mutable struct Net
     weight::Float64
 
     # convention : positive number - gate number, negative one - inverted pad number
     gates::Vector{UInt}
     pads::Vector{UInt}
 
-    gates_set::IntSet
-    pads_set::IntSet
+    gates_set::BitSet
+    pads_set::BitSet
 
-    Net(weight::Float64 = 1.0) = new(weight, UInt[], UInt[], IntSet(), IntSet())
+    Net(weight::Float64 = 1.0) = new(weight, UInt[], UInt[], BitSet(), BitSet())
 end
 
 function net_is_empty(n::Net)
@@ -67,29 +70,29 @@ function read_input(fname::AbstractString)
     is = open(fname, "r")
     line = readline(is)
     nums = split(line)
-    (num_gates::UInt, num_nets::UInt) = (parse(nums[1]), parse(nums[2]))
+    (num_gates::UInt, num_nets::UInt) = (parse(UInt, nums[1]), parse(UInt, nums[2]))
     println("-I- read num_gates: $num_gates num_nets: $num_nets")
 
     # read gates
-    gates = Array{Gate}(num_gates)
+    gates = Array{Gate}(undef, num_gates)
     for i = 1:num_gates
         line = readline(is)
         nums = split(line)
-        (gate_num, num_nets_connected) = (parse(nums[1]), parse(nums[2]))
+        (gate_num, num_nets_connected) = (parse(UInt, nums[1]), parse(UInt, nums[2]))
         @assert(gate_num == i, "gate_num: $gate_num i: $i")
-        nets = [parse(nums[j + 2]) for j = 1:num_nets_connected]
+        nets = [parse(UInt, nums[j + 2]) for j = 1:num_nets_connected]
         gates[i] = Gate(i, nets)
     end
 
     # read pads
     line = readline(is)
-    num_pads::UInt = parse(line)
+    num_pads::UInt = parse(UInt, line)
     println("-I- read num_pads: $num_pads")
-    pads = Array{Pad}(num_pads)
+    pads = Array{Pad}(undef, num_pads)
     for i = 1:num_pads
         line = readline(is)
         nums = split(line)
-        (pad_num::UInt, net_num::UInt, x::Float64, y::Float64) = (parse(nums[1]), parse(nums[2]), parse(nums[3]), parse(nums[4]))
+        (pad_num::UInt, net_num::UInt, x::Float64, y::Float64) = (parse(UInt, nums[1]), parse(UInt, nums[2]), parse(Float64, nums[3]), parse(Float64, nums[4]))
         @assert(pad_num == i, "pad_num: $pad_num i: $i")
         pads[i] = Pad(Pos(x,y), net_num)
 
@@ -100,8 +103,8 @@ function read_input(fname::AbstractString)
 end
 
 function fill_net_sets(n::Net)
-    n.gates_set = IntSet(n.gates)
-    n.pads_set  = IntSet(n.pads)
+    n.gates_set = BitSet(n.gates)
+    n.pads_set  = BitSet(n.pads)
 end
 
 function create_nets(num_nets::UInt, gates::Vector{Gate}, pads::Vector{Pad})
@@ -235,7 +238,7 @@ function left_side_containment(verbose   ::Bool,
                                pads      ::Vector{Pad})
     num_gates = length(gates)
     left_gates = [deepcopy(gates[left_pos[i][1]]) for i = 1:length(left_pos)]
-    left_gates_renumbering = Array{Int}(num_gates)
+    left_gates_renumbering = Array{Int}(undef, num_gates)
     fill!(left_gates_renumbering, -1)
     for i = 1:length(left_gates)
         left_gates_renumbering[left_gates[i].id] = i
@@ -245,12 +248,12 @@ function left_side_containment(verbose   ::Bool,
         println("-D- left_gates : $left_gates")
         println("-D- left_gates_renumbering : $left_gates_renumbering")
     end
-    left_gates_indices  = IntSet([left_pos[i][1] for i = 1:length(left_pos)])
+    left_gates_indices  = BitSet([left_pos[i][1] for i = 1:length(left_pos)])
     if verbose println("-D- left gates indices : $left_gates_indices") end
-    right_gates_indices = IntSet([right_pos[i][1] for i = 1:length(right_pos)])
+    right_gates_indices = BitSet([right_pos[i][1] for i = 1:length(right_pos)])
     if verbose println("-D- right gates indices : $right_gates_indices") end
 
-    const median::Float64 = 50.0
+    local median::Float64 = 50.0
 
     num_nets = length(nets)
     left_nets = [Net() for i = 1:num_nets]
@@ -313,18 +316,18 @@ function right_side_containment(verbose   ::Bool,
     right_gates = [deepcopy(gates[right_pos[i][1]]) for i = 1:length(right_pos)]
     right_pads = deepcopy(pads)
     if verbose println("-D- right_gates : $right_gates") end
-    left_gates_indices  = IntSet([left_pos[i][1] for i = 1:length(left_pos)])
+    left_gates_indices  = BitSet([left_pos[i][1] for i = 1:length(left_pos)])
     if verbose println("-D- left gates indices : $left_gates_indices") end
-    right_gates_indices = IntSet([right_pos[i][1] for i = 1:length(right_pos)])
+    right_gates_indices = BitSet([right_pos[i][1] for i = 1:length(right_pos)])
     if verbose println("-D- right gates indices : $right_gates_indices") end
-    right_gates_renumbering = Array{Int}(num_gates)
+    right_gates_renumbering = Array{Int}(undef, num_gates)
     fill!(right_gates_renumbering, -1)
     for i = 1:length(right_gates)
         right_gates_renumbering[right_gates[i].id] = i
     end
     if verbose println("-D- right_gates_renumbering : $right_gates_renumbering") end
 
-    const median::Float64 = 50.0
+    local median::Float64 = 50.0
 
     num_nets = length(nets)
     right_nets = [Net() for i = 1:num_nets]
@@ -380,8 +383,8 @@ end
 
 function main()
 
-    const script_name = basename(@__FILE__)
-    const doc = """$script_name
+    local script_name = basename(@__FILE__)
+    local doc = """$script_name
 
 Quadratic Placement programming assignment for VLSI course.
 
