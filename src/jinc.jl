@@ -1,3 +1,5 @@
+using SpecialFunctions
+
 # computes $\frac{J_1(2\pi r)}{2\pi r}$ where $J_1$ - Bessel function of first kind
 jinc(r) = real(2*besselj(1,2π*r) / (2π*r))
 
@@ -6,6 +8,7 @@ using Roots
 jinc_zeros = fzeros(jinc, 0, 5)
 println("jinc_zeros : $jinc_zeros")
 
+using Cairo, Fontconfig
 using Gadfly
 
 my_plot = plot(jinc, 0, 5

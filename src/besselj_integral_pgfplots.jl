@@ -1,6 +1,7 @@
 using Calculus
 using PGFPlots
 using QuadGK
+using SpecialFunctions
 
 # WARNING: integrate(f,a,b) is deprecated, use (quadgk(f,a,b))[1] instead
 # f(x) = integrate(z -> besselj(1, z), 0.0, x)
