@@ -157,8 +157,8 @@ function qp_step(verbose::Bool, maxiter::Int, tol::Float64, nets::Vector{Net}, g
 
     A = spzeros(num_gates, num_gates)
     # use dense vectors for rhs 
-    bx = zeros(num_gates)
-    by = zeros(num_gates)
+    bx = spzeros(num_gates)
+    by = spzeros(num_gates)
 
     A = -C
     for i = 1:num_gates
@@ -190,7 +190,7 @@ function qp_step(verbose::Bool, maxiter::Int, tol::Float64, nets::Vector{Net}, g
         println("-D- by : \n$by")
     end
 
-    x,ch = IterativeSolvers.cg(A,bx,tol=tol,maxiter=maxiter, log=true)
+    x,ch = IterativeSolvers.cg(A,bx; abstol=tol, maxiter=maxiter, log=true)
     #see https://github.com/JuliaLang/julia/issues/6485#issuecomment-40063871
     #feature request https://github.com/JuliaLang/julia/issues/6485
     #https://github.com/mfasi/julia/commit/4ceb4ea9ee46ea92d406cfced308451a112d16f9
@@ -202,13 +202,12 @@ function qp_step(verbose::Bool, maxiter::Int, tol::Float64, nets::Vector{Net}, g
 
     atol = cond(A, Inf)*sqrt(tol)
 
-    @test A * x ≈ bx atol=atol
+    @test norm(A * x - bx) ≤ atol
     @test ch.isconverged
     println("ch_x : $ch")
     
-    y,ch = IterativeSolvers.cg(A,by,tol=tol,maxiter=maxiter, log=true)
-    #ditto above
-    @test A * y ≈ by atol=atol
+    y,ch = IterativeSolvers.cg(A,by; abstol=tol, maxiter=maxiter, log=true)
+    @test norm(A * y - by) ≤ atol
     @test ch.isconverged
     if verbose println("ch_y : $ch") end
 
