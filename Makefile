@@ -13,3 +13,6 @@ besselj_integral_pgf:
 qp:
 	julia src/qp.jl benchmarks/3QP/toy1 toy1.out
 
+qp_sysimage:
+	julia --sysimage src/sys_iterative_solvers.so src/qp.jl benchmarks/3QP/toy1 toy1.out
+

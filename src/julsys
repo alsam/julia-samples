@@ -1,0 +1,2 @@
+#!/bin/sh
+julia --sysimage sys_iterative_solvers.so "$@"

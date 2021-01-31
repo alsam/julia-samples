@@ -500,4 +500,4 @@ Options:
     end
 end
 
-main()
+@time main()
